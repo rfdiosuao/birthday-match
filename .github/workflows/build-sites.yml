@@ -1,0 +1,45 @@
+name: Build Sites artifact
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/deploy-birthday-match-20260730
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://romjehfauwjfitelwxbl.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_n_BnKWl0eUZ24AgzlNiP3A_IXOvKIN2
+      NEXT_PUBLIC_SITE_URL: https://birthday-match.invalid
+      NEXT_PUBLIC_SUPPORT_EMAIL: rfdiosuao@users.noreply.github.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # The lockfile is maintained on Windows; npm fills Linux-only optional
+      # native packages before the reproducible build steps below.
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build:sites
+
+      - name: Package Sites build
+        run: tar -czf birthday-match-sites.tgz .open-next .openai/hosting.json wrangler.jsonc
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: birthday-match-sites
+          path: birthday-match-sites.tgz
+          if-no-files-found: error
+          retention-days: 7

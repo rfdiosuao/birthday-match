@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getOptionalUser } from "@/lib/supabase/server";
+import { getOptionalUser } from "@/lib/auth/session";
 import { LogoutButton } from "./logout-button";
 
 export async function SiteHeader() {

@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MatchDeck } from "@/components/match-deck";
-import { createClient, requireUser } from "@/lib/supabase/server";
-import type { BirthdayProfile, CandidateProfile } from "@/lib/types";
+import { requireUser } from "@/lib/auth/session";
+import { getRepository } from "@/lib/data/client";
+import type { CandidateProfile } from "@/lib/types";
 
 export const metadata: Metadata = { title: "找同日的人" };
 export const dynamic = "force-dynamic";
 
 export default async function MatchesPage() {
   const user = await requireUser();
-  const supabase = await createClient();
-  const { data: ownData } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-  if (!ownData) redirect("/onboarding");
+  const repository = getRepository();
+  const profile = await repository.getProfile(user.id);
+  if (!profile) redirect("/onboarding");
 
-  const profile = ownData as unknown as BirthdayProfile;
   if (profile.visibility === "paused") {
     return (
       <main id="main-content" className="state-page">
@@ -26,8 +26,13 @@ export default async function MatchesPage() {
     );
   }
 
-  const { data, error } = await supabase.rpc("get_birthday_candidates");
-  const candidates = error ? [] : (data as unknown as CandidateProfile[]);
+  let candidates: CandidateProfile[] = [];
+  let loadError = false;
+  try {
+    candidates = await repository.getBirthdayCandidates(user.id);
+  } catch {
+    loadError = true;
+  }
 
   return (
     <main id="main-content" className="matches-page">
@@ -41,7 +46,7 @@ export default async function MatchesPage() {
           <span>{profile.city_name}</span>
         </div>
       </header>
-      {error ? <p className="system-error" role="alert">候选人暂时无法加载，请稍后刷新页面。</p> : null}
+      {loadError ? <p className="system-error" role="alert">候选人暂时无法加载，请稍后刷新页面。</p> : null}
       <MatchDeck initialCandidates={candidates} />
     </main>
   );

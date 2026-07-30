@@ -398,6 +398,175 @@ dd {
   line-height: .8;
 }
 
+.birthday-poster-wall {
+  border-bottom: 1px solid var(--ink);
+  background: #07111f;
+  color: var(--surface);
+}
+
+.birthday-poster {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.birthday-poster-image {
+  z-index: -2;
+  object-fit: cover;
+  transition: transform 900ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.birthday-poster:hover .birthday-poster-image {
+  transform: scale(1.018);
+}
+
+.birthday-poster-primary {
+  min-height: clamp(680px, calc(100vh - 74px), 960px);
+  padding: 42px var(--page) 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.birthday-poster-primary .birthday-poster-image {
+  object-position: center;
+}
+
+.birthday-poster-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(2, 8, 15, .94) 0%, rgba(2, 8, 15, .79) 34%, rgba(2, 8, 15, .15) 72%, rgba(2, 8, 15, .28) 100%),
+    linear-gradient(0deg, rgba(2, 8, 15, .68) 0%, transparent 48%);
+}
+
+.birthday-poster-mark,
+.birthday-poster-note {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.birthday-poster-mark {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.birthday-poster-mark span {
+  padding: 5px 7px;
+  background: var(--accent);
+  color: var(--surface);
+  letter-spacing: .09em;
+}
+
+.birthday-poster-copy {
+  width: min(900px, 70%);
+  margin: auto 0;
+  padding: 70px 0;
+}
+
+.birthday-poster-copy .kicker {
+  color: #ff6f86;
+}
+
+.birthday-poster-copy h2 {
+  margin-bottom: 34px;
+  font-size: clamp(58px, 7.4vw, 132px);
+  font-weight: 700;
+  letter-spacing: -.075em;
+  line-height: .9;
+  text-wrap: balance;
+}
+
+.birthday-poster-copy h2 span {
+  color: #ff3859;
+}
+
+.birthday-poster-copy > p:not(.kicker) {
+  max-width: 640px;
+  margin-bottom: 34px;
+  color: rgba(255, 255, 255, .78);
+  font-size: clamp(18px, 1.45vw, 23px);
+  line-height: 1.75;
+}
+
+.birthday-poster-copy strong {
+  color: var(--surface);
+  font-weight: 800;
+}
+
+.birthday-poster-action {
+  border-color: var(--surface);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.birthday-poster-action:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.birthday-poster-note {
+  align-self: flex-end;
+  color: rgba(255, 255, 255, .6);
+  letter-spacing: .08em;
+}
+
+.birthday-poster-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid rgba(255, 255, 255, .55);
+}
+
+.birthday-poster-pair .birthday-poster {
+  min-height: clamp(660px, 76vw, 1080px);
+}
+
+.birthday-poster-pair .birthday-poster + .birthday-poster {
+  border-left: 1px solid rgba(255, 255, 255, .55);
+}
+
+.birthday-poster-pair figcaption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: clamp(28px, 4vw, 62px) var(--page);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.birthday-poster-pair figcaption span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.birthday-poster-pair figcaption strong {
+  max-width: 680px;
+  font-size: clamp(32px, 4.2vw, 70px);
+  letter-spacing: -.055em;
+  line-height: 1;
+}
+
+.birthday-poster-morning figcaption {
+  background: linear-gradient(0deg, rgba(255, 247, 233, .96), rgba(255, 247, 233, .74) 66%, transparent);
+  color: var(--ink);
+}
+
+.birthday-poster-fireworks figcaption {
+  background: linear-gradient(0deg, rgba(2, 8, 15, .92), rgba(2, 8, 15, .52) 66%, transparent);
+  color: var(--surface);
+}
+
 .origin-section {
   padding: 120px var(--page);
   display: grid;
@@ -1442,6 +1611,63 @@ textarea::placeholder {
 
   .hero-date {
     min-height: 500px;
+  }
+
+  .birthday-poster-primary {
+    min-height: 760px;
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .birthday-poster-primary .birthday-poster-image {
+    object-position: 69% center;
+  }
+
+  .birthday-poster-scrim {
+    background:
+      linear-gradient(90deg, rgba(2, 8, 15, .9) 0%, rgba(2, 8, 15, .59) 72%, rgba(2, 8, 15, .34) 100%),
+      linear-gradient(0deg, rgba(2, 8, 15, .88) 0%, rgba(2, 8, 15, .2) 70%);
+  }
+
+  .birthday-poster-copy {
+    width: 100%;
+    padding: 82px 0 54px;
+  }
+
+  .birthday-poster-copy h2 {
+    margin-bottom: 28px;
+    font-size: clamp(46px, 13.4vw, 70px);
+    overflow-wrap: anywhere;
+  }
+
+  .birthday-poster-copy > p:not(.kicker) {
+    font-size: 17px;
+  }
+
+  .birthday-poster-note {
+    max-width: 80%;
+    text-align: right;
+  }
+
+  .birthday-poster-pair {
+    grid-template-columns: 1fr;
+  }
+
+  .birthday-poster-pair .birthday-poster {
+    min-height: 720px;
+  }
+
+  .birthday-poster-pair .birthday-poster + .birthday-poster {
+    border-top: 1px solid rgba(255, 255, 255, .55);
+    border-left: 0;
+  }
+
+  .birthday-poster-pair figcaption {
+    padding: 48px var(--page);
+  }
+
+  .birthday-poster-pair figcaption strong {
+    font-size: clamp(38px, 11vw, 56px);
   }
 
   .date-display {

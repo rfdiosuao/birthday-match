@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, LockKeyhole, MapPin, Users } from "lucide-react";
 import { getOptionalUser } from "@/lib/auth/session";
@@ -41,6 +42,63 @@ export default async function HomePage() {
           <div className="date-meta"><span>{today.year}</span><span>同一天 · 同一座城</span></div>
           <div className="date-display"><strong>{today.month}</strong><i>/</i><strong>{today.day}</strong></div>
           <div className="date-caption"><span>今天过生日的人，<br />也许正在等一个邀请。</span><b>01</b></div>
+        </div>
+      </section>
+
+      <section className="birthday-poster-wall" aria-labelledby="birthday-poster-title">
+        <article className="birthday-poster birthday-poster-primary">
+          <Image
+            className="birthday-poster-image"
+            src="/posters/birthday-midnight.webp"
+            alt=""
+            fill
+            sizes="100vw"
+          />
+          <div className="birthday-poster-scrim" aria-hidden="true" />
+          <p className="birthday-poster-mark"><span>HAPPY</span> BIRTHDAY / TODAY</p>
+          <div className="birthday-poster-copy">
+            <p className="kicker">既然你点进来了</p>
+            <h2 id="birthday-poster-title">
+              那么你应该是<br /><span>今天生日吧.</span>
+            </h2>
+            <p>
+              不管有没有人陪你过生日，<br />
+              <strong>你今天一定要快乐哦。</strong>
+            </p>
+            <Link className="button birthday-poster-action" href={primaryHref}>
+              {user ? "看看谁也在等你" : "给今天一个邀请"}<ArrowRight aria-hidden="true" size={18} />
+            </Link>
+          </div>
+          <p className="birthday-poster-note" aria-hidden="true">MAKE A WISH · 吹蜡烛之前，先许一个愿望</p>
+        </article>
+
+        <div className="birthday-poster-pair">
+          <figure className="birthday-poster birthday-poster-morning">
+            <Image
+              className="birthday-poster-image"
+              src="/posters/birthday-morning.webp"
+              alt="清晨阳光照进房间，桌上放着草莓蛋糕、红色礼物和一朵花"
+              fill
+              sizes="(max-width: 760px) 100vw, 50vw"
+            />
+            <figcaption>
+              <span>08:00 / 新的一岁</span>
+              <strong>先从好好爱自己开始。</strong>
+            </figcaption>
+          </figure>
+          <figure className="birthday-poster birthday-poster-fireworks">
+            <Image
+              className="birthday-poster-image"
+              src="/posters/birthday-fireworks.webp"
+              alt="夜晚的屋顶上摆着一块生日蛋糕，远处烟花正在绽放"
+              fill
+              sizes="(max-width: 760px) 100vw, 50vw"
+            />
+            <figcaption>
+              <span>23:59 / 今天结束以前</span>
+              <strong>请记得为自己庆祝。</strong>
+            </figcaption>
+          </figure>
         </div>
       </section>
 

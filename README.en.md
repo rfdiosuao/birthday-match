@@ -85,7 +85,7 @@ Copy `.env.example` to `.env.production`, set a long random database password, y
 docker compose --env-file .env.production up -d --build
 ```
 
-The app listens on `127.0.0.1:3020` by default. PostgreSQL is available only on the private Compose network. Install [`deploy/nginx.conf`](./deploy/nginx.conf) and use Certbot to enable HTTPS.
+The app listens on `127.0.0.1:3020` by default. PostgreSQL is available only on the private Compose network. Install [`deploy/nginx.conf`](./deploy/nginx.conf) and use Certbot to enable HTTPS. When the DNS record is proxied through Cloudflare, also install [`deploy/cloudflare-realip.conf`](./deploy/cloudflare-realip.conf) under `/etc/nginx/conf.d/` so logs and authentication rate limits use the real visitor IP instead of a shared Cloudflare edge address.
 
 Run schema migrations:
 

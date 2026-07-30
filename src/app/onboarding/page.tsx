@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import { ProfileForm } from "@/components/profile-form";
-import { createClient, requireUser } from "@/lib/supabase/server";
-import type { BirthdayProfile } from "@/lib/types";
+import { requireUser } from "@/lib/auth/session";
+import { getRepository } from "@/lib/data/client";
 
 export const metadata: Metadata = { title: "我的生日档案" };
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
   const user = await requireUser();
-  const supabase = await createClient();
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-  const profile = data ? (data as unknown as BirthdayProfile) : null;
+  const profile = await getRepository().getProfile(user.id);
 
   return (
     <main id="main-content" className="profile-page">

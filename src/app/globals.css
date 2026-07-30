@@ -600,9 +600,34 @@ dd {
 }
 
 .auth-form > svg {
-  margin-bottom: 70px;
+  margin-bottom: 30px;
   color: var(--accent);
   stroke-width: 1.5;
+}
+
+.auth-mode-switch {
+  margin-bottom: 46px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--ink);
+}
+
+.auth-mode-switch button {
+  min-height: 42px;
+  border: 0;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.auth-mode-switch button + button {
+  border-left: 1px solid var(--ink);
+}
+
+.auth-mode-switch button.active {
+  background: var(--ink);
+  color: var(--surface);
 }
 
 .auth-form h2 {

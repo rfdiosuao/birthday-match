@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Check, LockKeyhole, MapPin, Users } from "lucide-react";
-import { getOptionalUser } from "@/lib/supabase/server";
+import { getOptionalUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 

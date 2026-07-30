@@ -130,7 +130,7 @@ TEST_DATABASE_URL=postgresql://... npm test -- src/lib/data/repository.integrati
 docker compose --env-file .env.production up -d --build
 ```
 
-应用默认只监听服务器的 `127.0.0.1:3020`，PostgreSQL 不映射宿主机端口。将 [`deploy/nginx.conf`](./deploy/nginx.conf) 安装到 Nginx 后，再使用 Certbot 配置 HTTPS。
+应用默认只监听服务器的 `127.0.0.1:3020`，PostgreSQL 不映射宿主机端口。将 [`deploy/nginx.conf`](./deploy/nginx.conf) 安装到 Nginx 后，再使用 Certbot 配置 HTTPS。如果 DNS 开启了 Cloudflare 代理，还应将 [`deploy/cloudflare-realip.conf`](./deploy/cloudflare-realip.conf) 安装到 `/etc/nginx/conf.d/`，确保日志与认证限流使用真实访客 IP，而不是共享的 Cloudflare 节点 IP。
 
 数据库初始化文件位于 [`database/schema.sql`](./database/schema.sql)。已有数据库升级时执行：
 

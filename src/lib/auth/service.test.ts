@@ -10,8 +10,16 @@ function createRepository(): AuthUserRepository & { users: AuthUser[] } {
       return users.find((user) => user.email === email) || null;
     },
     async create(email, passwordHash) {
-      if (users.some((user) => user.email === email)) throw new AuthServiceError("email_exists");
-      const user = { id: crypto.randomUUID(), email, passwordHash };
+      if (users.some((user) => user.email === email)) {
+        throw Object.assign(new Error("repository email conflict"), { code: "email_exists" });
+      }
+      const user: AuthUser = {
+        id: crypto.randomUUID(),
+        email,
+        passwordHash,
+        role: "user",
+        status: "active",
+      };
       users.push(user);
       return user;
     },
@@ -37,6 +45,7 @@ describe("registration", () => {
 
     await registerUser(repository, credentials);
 
+    await expect(registerUser(repository, credentials)).rejects.toBeInstanceOf(AuthServiceError);
     await expect(registerUser(repository, credentials)).rejects.toMatchObject({ code: "email_exists" });
   });
 });
@@ -77,5 +86,21 @@ describe("authentication", () => {
         password: "wrong-password",
       }),
     ).rejects.toMatchObject({ code: "invalid_credentials" });
+  });
+
+  it("rejects a banned account even when the password is correct", async () => {
+    const repository = createRepository();
+    const registered = await registerUser(repository, {
+      email: "blocked@example.com",
+      password: "a-secure-password",
+    });
+    Object.assign(registered, { status: "banned" });
+
+    await expect(
+      authenticateUser(repository, {
+        email: "blocked@example.com",
+        password: "a-secure-password",
+      }),
+    ).rejects.toMatchObject({ code: "account_disabled" });
   });
 });

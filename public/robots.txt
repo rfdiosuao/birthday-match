@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /connections
+Disallow: /matches
+Disallow: /onboarding
+
+Sitemap: https://birthday.heang.top/sitemap.xml

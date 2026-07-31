@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MatchDeck } from "@/components/match-deck";
 import { requireUser } from "@/lib/auth/session";
+import { birthdayVisuals } from "@/lib/birthday-visuals";
 import { getRepository } from "@/lib/data/client";
 import type { CandidateProfile } from "@/lib/types";
 
@@ -41,10 +43,21 @@ export default async function MatchesPage() {
           <p className="kicker">同城 · 同一天生日</p>
           <h1>看看今年，<br />会和谁一起过<span>.</span></h1>
         </div>
-        <div className="dashboard-date" aria-label={`${profile.birthday_month} 月 ${profile.birthday_day} 日`}>
-          <strong>{String(profile.birthday_month).padStart(2, "0")}</strong><i>/</i><strong>{String(profile.birthday_day).padStart(2, "0")}</strong>
-          <span>{profile.city_name}</span>
-        </div>
+        <figure className="dashboard-visual">
+          <Image
+            src={birthdayVisuals.cityCakeWalk.src}
+            alt={birthdayVisuals.cityCakeWalk.alt}
+            fill
+            priority
+            sizes="(max-width: 760px) 100vw, 42vw"
+          />
+          <div className="dashboard-visual-scrim" aria-hidden="true" />
+          <div className="dashboard-date" aria-label={`${profile.birthday_month} 月 ${profile.birthday_day} 日`}>
+            <strong>{String(profile.birthday_month).padStart(2, "0")}</strong><i>/</i><strong>{String(profile.birthday_day).padStart(2, "0")}</strong>
+            <span>{profile.city_name}</span>
+          </div>
+          <figcaption>带上蛋糕，去见同一天的人。</figcaption>
+        </figure>
       </header>
       {loadError ? <p className="system-error" role="alert">候选人暂时无法加载，请稍后刷新页面。</p> : null}
       <MatchDeck initialCandidates={candidates} />

@@ -10,6 +10,7 @@ export const SESSION_COOKIE_NAME = "birthday_session";
 export interface SessionUser {
   id: string;
   email: string;
+  role: "user" | "admin";
 }
 
 export async function createSession(userId: string) {
@@ -38,6 +39,12 @@ export async function getOptionalUser(): Promise<SessionUser | null> {
 export async function requireUser() {
   const user = await getOptionalUser();
   if (!user) redirect("/login");
+  return user;
+}
+
+export async function requireAdmin() {
+  const user = await requireUser();
+  if (user.role !== "admin") redirect("/");
   return user;
 }
 

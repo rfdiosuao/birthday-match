@@ -8,6 +8,13 @@ create table if not exists app_users (
   updated_at timestamptz not null default now()
 );
 
+alter table app_users add column if not exists role text not null default 'user'
+  check (role in ('user', 'admin'));
+alter table app_users add column if not exists status text not null default 'active'
+  check (status in ('active', 'banned'));
+alter table app_users add column if not exists banned_at timestamptz;
+alter table app_users add column if not exists ban_reason text;
+
 create unique index if not exists app_users_email_unique_idx on app_users (lower(email));
 
 create table if not exists sessions (
@@ -85,6 +92,19 @@ create table if not exists reports (
 );
 
 create index if not exists reports_pair_idx on reports (reporter_id, target_id);
+
+create table if not exists support_requests (
+  id uuid primary key default gen_random_uuid(),
+  category text not null check (category in ('account_recovery', 'safety', 'privacy', 'general')),
+  email text not null check (char_length(email) between 3 and 320),
+  message text not null check (char_length(message) between 20 and 1000),
+  status text not null default 'open' check (status in ('open', 'resolved')),
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+
+create index if not exists support_requests_status_created_idx
+  on support_requests (status, created_at desc);
 
 create or replace function set_updated_at()
 returns trigger

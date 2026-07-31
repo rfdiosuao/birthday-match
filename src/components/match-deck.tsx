@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { Flag, Heart, MapPin, X } from "lucide-react";
+import { birthdayVisuals, visualForCandidate } from "@/lib/birthday-visuals";
 import { labels } from "@/lib/constants";
 import type { CandidateProfile } from "@/lib/types";
 
@@ -13,6 +15,7 @@ export function MatchDeck({ initialCandidates }: { initialCandidates: CandidateP
   const [matchedName, setMatchedName] = useState("");
   const [reporting, setReporting] = useState<CandidateProfile | null>(null);
   const candidate = candidates[0];
+  const candidateVisual = candidate ? visualForCandidate(candidate) : null;
 
   async function react(decision: "interested" | "pass") {
     if (!candidate || loading) return;
@@ -59,12 +62,22 @@ export function MatchDeck({ initialCandidates }: { initialCandidates: CandidateP
   if (matchedName) {
     return (
       <section className="match-success" aria-live="polite">
-        <p className="section-number">MATCH</p>
-        <h2>你和 {matchedName}<br />都想一起过<span>.</span></h2>
-        <p>联系方式已经向双方开放。先打个招呼，再共同确认公共见面地点和当天计划。</p>
-        <div className="hero-actions">
-          <Link className="button button-inverse" href="/connections">查看联系方式</Link>
-          <button className="text-button inverse" type="button" onClick={() => setMatchedName("")}>继续查看</button>
+        <Image
+          className="match-success-image"
+          src={birthdayVisuals.twoCakesMatch.src}
+          alt={birthdayVisuals.twoCakesMatch.alt}
+          fill
+          sizes="100vw"
+        />
+        <div className="match-success-scrim" aria-hidden="true" />
+        <div className="match-success-content">
+          <p className="section-number">MATCH</p>
+          <h2>你和 {matchedName}<br />都想一起过<span>.</span></h2>
+          <p>联系方式已经向双方开放。先打个招呼，再共同确认公共见面地点和当天计划。</p>
+          <div className="hero-actions">
+            <Link className="button button-inverse" href="/connections">查看联系方式</Link>
+            <button className="text-button inverse" type="button" onClick={() => setMatchedName("")}>继续查看</button>
+          </div>
         </div>
       </section>
     );
@@ -80,6 +93,15 @@ export function MatchDeck({ initialCandidates }: { initialCandidates: CandidateP
           <p>你的档案会继续参与匹配。可以过一段时间再回来，也可以邀请同一天生日的人加入。</p>
           <button className="button button-primary" type="button" onClick={() => navigator.clipboard.writeText("今年我想好好过生日——找到同城、同一天生日，也想认真庆祝的人。")}>复制邀请文案</button>
         </div>
+        <figure className="empty-state-visual">
+          <Image
+            src={birthdayVisuals.rainySelfCelebration.src}
+            alt={birthdayVisuals.rainySelfCelebration.alt}
+            fill
+            sizes="(max-width: 760px) 100vw, 34vw"
+          />
+          <figcaption>等别人来到以前，也别忘了好好陪自己。</figcaption>
+        </figure>
       </section>
     );
   }
@@ -102,6 +124,17 @@ export function MatchDeck({ initialCandidates }: { initialCandidates: CandidateP
             {String(candidate.birthday_month).padStart(2, "0")}<i>/</i>{String(candidate.birthday_day).padStart(2, "0")}
           </div>
         </div>
+        {candidateVisual ? (
+          <figure className="candidate-inspiration">
+            <Image
+              src={candidateVisual.src}
+              alt={candidateVisual.alt}
+              fill
+              sizes="(max-width: 760px) 100vw, 55vw"
+            />
+            <figcaption>{candidateVisual.note}</figcaption>
+          </figure>
+        ) : null}
         <p className="candidate-city"><MapPin aria-hidden="true" size={17} />{candidate.city_name}</p>
         <blockquote>{candidate.bio}</blockquote>
         <dl className="candidate-facts">

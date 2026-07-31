@@ -80,3 +80,19 @@ export const reportSchema = z.object({
   reason: z.enum(["harassment", "false_information", "unsafe_behavior", "spam", "other"]),
   details: z.string().trim().max(500).default(""),
 });
+
+export const supportRequestSchema = z.object({
+  category: z.enum(["account_recovery", "safety", "privacy", "general"]),
+  email: z.email().trim().max(320),
+  message: z.string().trim().min(20, "请至少填写 20 个字，方便我们了解情况。").max(1000),
+  website: z.string().max(200).default(""),
+});
+
+export const moderationSchema = z.object({
+  reportId: z.uuid(),
+  action: z.enum(["reviewing", "resolved", "ban"]),
+});
+
+export const supportResolutionSchema = z.object({
+  requestId: z.uuid(),
+});

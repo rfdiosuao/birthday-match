@@ -12,6 +12,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof AuthServiceError) {
+      if (error.code === "account_disabled") {
+        return NextResponse.json({ error: "该账号已被停用。如有疑问，请联系客服。" }, { status: 403 });
+      }
       return NextResponse.json({ error: "邮箱或密码不正确。" }, { status: 401 });
     }
     return NextResponse.json({ error: "登录暂时不可用，请稍后重试。" }, { status: 500 });

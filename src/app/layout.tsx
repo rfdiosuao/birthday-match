@@ -15,6 +15,15 @@ export const metadata: Metadata = {
     description: "把一个人的生日，过成一群人的 Happy Day。",
     type: "website",
     locale: "zh_CN",
+    url: "/",
+    siteName: "今年我想好好过生日",
+    images: [{ url: "/posters/birthday-midnight.webp", width: 1536, height: 1024, alt: "今年我想好好过生日" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "今年我想好好过生日",
+    description: "找到同城、同一天生日，也想认真庆祝的人。",
+    images: ["/posters/birthday-midnight.webp"],
   },
 };
 

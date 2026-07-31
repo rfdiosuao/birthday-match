@@ -215,7 +215,6 @@ export class AppRepository implements AuthUserRepository {
              or (reporter_id = candidate.id and target_id = ${userId})
         )
       order by candidate.created_at asc
-      limit 30
     `;
 
     return candidates
@@ -240,7 +239,8 @@ export class AppRepository implements AuthUserRepository {
           ),
         };
       })
-      .sort((left, right) => right.compatibility - left.compatibility);
+      .sort((left, right) => right.compatibility - left.compatibility)
+      .slice(0, 30);
   }
 
   async respondToCandidate(
@@ -249,16 +249,17 @@ export class AppRepository implements AuthUserRepository {
     decision: "interested" | "pass",
   ): Promise<{ matched: boolean; connectionId: string | null }> {
     return this.sql.begin(async (transaction) => {
-      const [me] = await transaction<BirthdayProfile[]>`
+      const [userLow, userHigh] = orderedUserIds(userId, targetId);
+      const profiles = await transaction<BirthdayProfile[]>`
         select * from profiles
-        where id = ${userId} and onboarding_complete = true
+        where id in (${userLow}, ${userHigh})
+          and onboarding_complete = true
+          and visibility = 'active'
+        order by id
         for update
       `;
-      const [target] = await transaction<BirthdayProfile[]>`
-        select * from profiles
-        where id = ${targetId} and onboarding_complete = true and visibility = 'active'
-        for update
-      `;
+      const me = profiles.find((profile) => profile.id === userId);
+      const target = profiles.find((profile) => profile.id === targetId);
 
       if (!me || !target || !isEligible(me, target)) throw new Error("candidate is unavailable");
 
@@ -290,7 +291,6 @@ export class AppRepository implements AuthUserRepository {
       `;
       if (!reverseReaction) return { matched: false, connectionId: null };
 
-      const [userLow, userHigh] = userId < targetId ? [userId, targetId] : [targetId, userId];
       const [connection] = await transaction<{ id: string }[]>`
         insert into connections (user_low, user_high)
         values (${userLow}, ${userHigh})
@@ -349,6 +349,10 @@ function isEligible(me: BirthdayProfile, target: BirthdayProfile) {
   if (target.group_preference === "women_only" && me.gender !== "woman") return false;
   if (target.group_preference === "men_only" && me.gender !== "man") return false;
   return true;
+}
+
+export function orderedUserIds(left: string, right: string): [string, string] {
+  return left < right ? [left, right] : [right, left];
 }
 
 function isPostgresError(error: unknown, code: string) {

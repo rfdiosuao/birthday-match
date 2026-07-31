@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, LockKeyhole, MapPin, Users } from "lucide-react";
+import { BirthdayMoments } from "@/components/birthday-moments";
 import { getOptionalUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -113,6 +114,8 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+
+      <BirthdayMoments href={primaryHref} />
 
       <section className="how-section" id="how">
         <div className="section-title">

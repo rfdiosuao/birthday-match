@@ -29,7 +29,7 @@ function profile(overrides: Partial<ValidProfileInput> = {}): ValidProfileInput 
 }
 
 describe.skipIf(!databaseUrl)("repository integration", () => {
-  const sql = postgres(databaseUrl!, { max: 1 });
+  const sql = postgres(databaseUrl!, { max: 5 });
   const repository = new AppRepository(sql);
   const schemaPath = fileURLToPath(new URL("../../../database/schema.sql", import.meta.url));
 
@@ -115,6 +115,67 @@ describe.skipIf(!databaseUrl)("repository integration", () => {
         contact_value: "right-contact",
       },
     ]);
+  });
+
+  it("rejects reactions from a paused profile", async () => {
+    const paused = await createUser("paused@example.com");
+    const active = await createUser("active@example.com");
+    await repository.upsertProfile(paused.id, profile({ nickname: "已暂停" }));
+    await repository.upsertProfile(active.id, profile({ nickname: "仍活跃" }));
+    await repository.upsertProfile(
+      paused.id,
+      profile({ nickname: "已暂停", visibility: "paused" }),
+    );
+
+    await expect(
+      repository.respondToCandidate(paused.id, active.id, "interested"),
+    ).rejects.toThrow("candidate is unavailable");
+  });
+
+  it("handles simultaneous mutual interest without a deadlock", async () => {
+    const left = await createUser("concurrent-left@example.com");
+    const right = await createUser("concurrent-right@example.com");
+    await repository.upsertProfile(left.id, profile({ nickname: "并发左边" }));
+    await repository.upsertProfile(right.id, profile({ nickname: "并发右边" }));
+
+    const responses = await Promise.all([
+      repository.respondToCandidate(left.id, right.id, "interested"),
+      repository.respondToCandidate(right.id, left.id, "interested"),
+    ]);
+
+    expect(responses.filter((response) => response.matched)).toHaveLength(1);
+    await expect(repository.getConnections(left.id)).resolves.toHaveLength(1);
+    await expect(repository.getConnections(right.id)).resolves.toHaveLength(1);
+  });
+
+  it("ranks all eligible profiles before keeping the best thirty", async () => {
+    const me = await createUser("ranking-me@example.com");
+    await repository.upsertProfile(me.id, profile({ nickname: "排序本人" }));
+
+    for (let index = 0; index < 30; index += 1) {
+      const candidate = await createUser(`ranking-low-${index}@example.com`);
+      await repository.upsertProfile(
+        candidate.id,
+        profile({
+          nickname: `普通候选${String(index).padStart(2, "0")}`,
+          celebrationStyle: "quiet",
+          budgetLevel: "under_100",
+          groupSize: "two",
+          activities: ["museum"],
+        }),
+      );
+    }
+
+    const best = await createUser("ranking-best@example.com");
+    await repository.upsertProfile(
+      best.id,
+      profile({ nickname: "最合适的人", activities: ["meal", "walk"] }),
+    );
+
+    const candidates = await repository.getBirthdayCandidates(me.id);
+
+    expect(candidates).toHaveLength(30);
+    expect(candidates[0]).toMatchObject({ id: best.id, nickname: "最合适的人" });
   });
 
   it("removes a reported user from future candidates", async () => {

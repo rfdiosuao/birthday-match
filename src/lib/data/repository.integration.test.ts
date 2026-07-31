@@ -42,7 +42,7 @@ describe.skipIf(!databaseUrl)("repository integration", () => {
   });
 
   beforeEach(async () => {
-    await sql`truncate table reports, connections, reactions, profiles, sessions, app_users restart identity cascade`;
+    await sql`truncate table support_requests, reports, connections, reactions, profiles, sessions, app_users restart identity cascade`;
   });
 
   afterAll(async () => {
@@ -58,10 +58,46 @@ describe.skipIf(!databaseUrl)("repository integration", () => {
     expect(await repository.findSessionUser("token-digest")).toEqual({
       id: user.id,
       email: "birthday@example.com",
+      role: "user",
     });
 
     await repository.deleteSession("token-digest");
     expect(await repository.findSessionUser("token-digest")).toBeNull();
+  });
+
+  it("lets an admin review reports, ban the target, and resolve support requests", async () => {
+    const admin = await createUser("admin@example.com");
+    const reporter = await createUser("reporter-admin-test@example.com");
+    const target = await createUser("target-admin-test@example.com");
+    const connectedUser = await createUser("connected-admin-test@example.com");
+    await sql`update app_users set role = 'admin' where id = ${admin.id}`;
+    await repository.upsertProfile(reporter.id, profile({ nickname: "举报用户" }));
+    await repository.upsertProfile(target.id, profile({ nickname: "待审核用户" }));
+    await repository.upsertProfile(connectedUser.id, profile({ nickname: "已匹配用户" }));
+    await repository.respondToCandidate(connectedUser.id, target.id, "interested");
+    await repository.respondToCandidate(target.id, connectedUser.id, "interested");
+    await repository.createSession(target.id, "target-session", new Date(Date.now() + 60_000));
+    await repository.createReport(reporter.id, target.id, "unsafe_behavior", "线下行为令人感到不安全");
+    await repository.createSupportRequest({
+      category: "account_recovery",
+      email: "help@example.com",
+      message: "我无法登录原来的账号，希望申请安全的账号恢复帮助。",
+    });
+
+    const dashboard = await repository.getAdminDashboard(admin.id);
+    expect(dashboard.reports).toHaveLength(1);
+    expect(dashboard.supportRequests).toHaveLength(1);
+
+    await repository.moderateReport(admin.id, dashboard.reports[0].id, "ban");
+    await repository.resolveSupportRequest(admin.id, dashboard.supportRequests[0].id);
+
+    await expect(repository.findSessionUser("target-session")).resolves.toBeNull();
+    await expect(repository.getConnections(connectedUser.id)).resolves.toEqual([]);
+    const reporterCandidates = await repository.getBirthdayCandidates(reporter.id);
+    expect(reporterCandidates).not.toContainEqual(expect.objectContaining({ id: target.id }));
+    const refreshed = await repository.getAdminDashboard(admin.id);
+    expect(refreshed.reports[0]).toMatchObject({ status: "resolved", target_status: "banned" });
+    expect(refreshed.supportRequests[0]).toMatchObject({ status: "resolved" });
   });
   });
 
@@ -184,9 +220,14 @@ describe.skipIf(!databaseUrl)("repository integration", () => {
     await repository.upsertProfile(reporter.id, profile({ nickname: "举报人" }));
     await repository.upsertProfile(target.id, profile({ nickname: "被举报人" }));
 
+    await repository.respondToCandidate(reporter.id, target.id, "interested");
+    await repository.respondToCandidate(target.id, reporter.id, "interested");
+    await expect(repository.getConnections(reporter.id)).resolves.toHaveLength(1);
+
     await repository.createReport(reporter.id, target.id, "unsafe_behavior", "线下行为令人不适");
 
     await expect(repository.getBirthdayCandidates(reporter.id)).resolves.toEqual([]);
+    await expect(repository.getConnections(reporter.id)).resolves.toEqual([]);
     await expect(
       repository.respondToCandidate(reporter.id, target.id, "interested"),
     ).rejects.toThrow("candidate is unavailable");

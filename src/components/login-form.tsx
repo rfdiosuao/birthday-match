@@ -83,6 +83,7 @@ export function LoginForm() {
         <button className="button button-primary button-wide" type="submit" disabled={loading}>
           {loading ? "正在处理" : mode === "login" ? "登录" : "注册并开始"}
         </button>
+        {mode === "login" ? <p className="form-help"><Link href="/support">忘记密码或无法登录？提交账号恢复请求</Link></p> : null}
         {message ? <p className={isError ? "form-message error" : "form-message"} role="status">{message}</p> : null}
         <p className="form-legal">继续即表示你同意我们的 <Link href="/terms">用户协议</Link> 和 <Link href="/privacy">隐私政策</Link>。</p>
       </form>

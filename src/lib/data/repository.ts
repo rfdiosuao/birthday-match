@@ -1,14 +1,23 @@
 import type { Sql } from "postgres";
 import { displayCity, normalizeCity } from "../city";
 import { calculateCompatibility, sharedActivities } from "../matching";
-import { AuthServiceError } from "../auth/service";
 import type { AuthUser, AuthUserRepository } from "../auth/service";
 import type { ValidProfileInput } from "../profile-schema";
-import type { BirthdayProfile, CandidateProfile, Connection } from "../types";
+import type {
+  AdminDashboardData,
+  AdminReport,
+  AdminSupportRequest,
+  BirthdayProfile,
+  CandidateProfile,
+  Connection,
+  ModerationAction,
+  SupportCategory,
+} from "../types";
 
 interface SessionUser {
   id: string;
   email: string;
+  role: "user" | "admin";
 }
 
 interface CandidateRow {
@@ -29,7 +38,7 @@ export class AppRepository implements AuthUserRepository {
 
   async findByEmail(email: string): Promise<AuthUser | null> {
     const [user] = await this.sql<AuthUser[]>`
-      select id, email, password_hash as "passwordHash"
+      select id, email, password_hash as "passwordHash", role, status
       from app_users
       where lower(email) = lower(${email})
       limit 1
@@ -42,11 +51,13 @@ export class AppRepository implements AuthUserRepository {
       const [user] = await this.sql<AuthUser[]>`
         insert into app_users (email, password_hash)
         values (${email}, ${passwordHash})
-        returning id, email, password_hash as "passwordHash"
+        returning id, email, password_hash as "passwordHash", role, status
       `;
       return user;
     } catch (error) {
-      if (isPostgresError(error, "23505")) throw new AuthServiceError("email_exists");
+      if (isPostgresError(error, "23505")) {
+        throw Object.assign(new Error("email already exists"), { code: "email_exists" as const });
+      }
       throw error;
     }
   }
@@ -60,11 +71,12 @@ export class AppRepository implements AuthUserRepository {
 
   async findSessionUser(tokenHash: string): Promise<SessionUser | null> {
     const [user] = await this.sql<SessionUser[]>`
-      select users.id, users.email
+      select users.id, users.email, users.role
       from sessions
       join app_users users on users.id = sessions.user_id
       where sessions.token_hash = ${tokenHash}
         and sessions.expires_at > now()
+        and users.status = 'active'
       limit 1
     `;
     return user || null;
@@ -318,7 +330,14 @@ export class AppRepository implements AuthUserRepository {
       from connections connection
       join profiles other
         on other.id = case when connection.user_low = ${userId} then connection.user_high else connection.user_low end
-      where connection.user_low = ${userId} or connection.user_high = ${userId}
+      join app_users other_account
+        on other_account.id = other.id and other_account.status = 'active'
+      where (connection.user_low = ${userId} or connection.user_high = ${userId})
+        and not exists (
+          select 1 from reports
+          where (reporter_id = ${userId} and target_id = other.id)
+             or (reporter_id = other.id and target_id = ${userId})
+        )
       order by connection.connected_at desc
     `;
   }
@@ -333,6 +352,114 @@ export class AppRepository implements AuthUserRepository {
       insert into reports (reporter_id, target_id, reason, details)
       values (${reporterId}, ${targetId}, ${reason}, ${details})
     `;
+  }
+
+  async createSupportRequest(input: {
+    category: SupportCategory;
+    email: string;
+    message: string;
+  }): Promise<void> {
+    await this.sql`
+      insert into support_requests (category, email, message)
+      values (${input.category}, ${input.email}, ${input.message})
+    `;
+  }
+
+  async getAdminDashboard(adminId: string): Promise<AdminDashboardData> {
+    const [admin] = await this.sql`
+      select 1 from app_users
+      where id = ${adminId} and role = 'admin' and status = 'active'
+      limit 1
+    `;
+    if (!admin) throw new Error("forbidden");
+
+    const [reports, supportRequests] = await Promise.all([
+      this.sql<AdminReport[]>`
+        select
+          report.id,
+          reporter.email as reporter_email,
+          reporter_profile.nickname as reporter_nickname,
+          target.email as target_email,
+          target_profile.nickname as target_nickname,
+          target.status as target_status,
+          report.reason,
+          report.details,
+          report.status,
+          report.created_at
+        from reports report
+        join app_users reporter on reporter.id = report.reporter_id
+        join app_users target on target.id = report.target_id
+        left join profiles reporter_profile on reporter_profile.id = reporter.id
+        left join profiles target_profile on target_profile.id = target.id
+        order by
+          case report.status when 'open' then 0 when 'reviewing' then 1 else 2 end,
+          report.created_at desc
+        limit 100
+      `,
+      this.sql<AdminSupportRequest[]>`
+        select id, category, email, message, status, created_at
+        from support_requests
+        order by case status when 'open' then 0 else 1 end, created_at desc
+        limit 100
+      `,
+    ]);
+
+    return { reports, supportRequests };
+  }
+
+  async moderateReport(
+    adminId: string,
+    reportId: string,
+    action: ModerationAction,
+  ): Promise<void> {
+    await this.sql.begin(async (transaction) => {
+      const [admin] = await transaction`
+        select 1 from app_users
+        where id = ${adminId} and role = 'admin' and status = 'active'
+        for update
+      `;
+      if (!admin) throw new Error("forbidden");
+
+      const [report] = await transaction<{ target_id: string }[]>`
+        select target_id from reports where id = ${reportId} for update
+      `;
+      if (!report) throw new Error("report not found");
+
+      if (action === "ban") {
+        const [bannedUser] = await transaction`
+          update app_users
+          set status = 'banned', banned_at = now(), ban_reason = '管理员根据举报记录停用账号'
+          where id = ${report.target_id} and role <> 'admin'
+          returning id
+        `;
+        if (!bannedUser) throw new Error("cannot ban this account");
+        await transaction`delete from sessions where user_id = ${report.target_id}`;
+        await transaction`update profiles set visibility = 'paused' where id = ${report.target_id}`;
+        await transaction`update reports set status = 'resolved' where id = ${reportId}`;
+        return;
+      }
+
+      await transaction`
+        update reports set status = ${action} where id = ${reportId}
+      `;
+    });
+  }
+
+  async resolveSupportRequest(adminId: string, requestId: string): Promise<void> {
+    const [admin] = await this.sql`
+      select 1 from app_users
+      where id = ${adminId} and role = 'admin' and status = 'active'
+      limit 1
+    `;
+    if (!admin) throw new Error("forbidden");
+
+    const [request] = await this.sql`
+      update support_requests
+      set status = 'resolved', resolved_at = now()
+      where id = ${requestId}
+      returning id
+    `;
+    if (!request) throw new Error("support request not found");
   }
 }
 

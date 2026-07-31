@@ -18,6 +18,7 @@ export async function SiteHeader() {
             <Link href="/matches">找同日的人</Link>
             <Link href="/connections">已匹配</Link>
             <Link href="/onboarding">我的档案</Link>
+            {user.role === "admin" ? <Link href="/admin">运营后台</Link> : null}
             <LogoutButton />
           </>
         ) : (

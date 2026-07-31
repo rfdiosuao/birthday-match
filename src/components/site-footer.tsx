@@ -29,6 +29,7 @@ export function SiteFooter() {
           <Link href="/safety">安全守则</Link>
           <Link href="/privacy">隐私政策</Link>
           <Link href="/terms">用户协议</Link>
+          <Link href="/support">联系客服</Link>
         </nav>
         <p className="footer-year">© {new Date().getFullYear()}</p>
       </footer>

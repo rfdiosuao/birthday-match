@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { displayCity, normalizeCity } from "./city";
 import { profileSchema } from "./profile-schema";
+import * as schemas from "./profile-schema";
 
 const validProfile = {
   nickname: "认真过生日",
@@ -39,5 +40,24 @@ describe("city normalization", () => {
   it("matches city names with or without an administrative suffix", () => {
     expect(normalizeCity(" 杭州市 ")).toBe(normalizeCity("杭州"));
     expect(displayCity(" 杭州市 ")).toBe("杭州市");
+  });
+});
+
+describe("support request validation", () => {
+  it("provides a schema for account recovery and safety requests", () => {
+    const supportRequestSchema = Reflect.get(schemas, "supportRequestSchema");
+    expect(supportRequestSchema).toBeDefined();
+    expect(supportRequestSchema.safeParse({
+      category: "account_recovery",
+      email: "birthday@example.com",
+      message: "我无法登录原来的账号，希望申请安全的账号恢复帮助。",
+      website: "",
+    }).success).toBe(true);
+    expect(supportRequestSchema.safeParse({
+      category: "general",
+      email: "not-an-email",
+      message: "太短",
+      website: "",
+    }).success).toBe(false);
   });
 });

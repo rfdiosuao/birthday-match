@@ -122,7 +122,7 @@ TEST_DATABASE_URL=postgresql://... npm test -- src/lib/data/repository.integrati
 
 - `POSTGRES_PASSWORD`：长随机密码
 - `NEXT_PUBLIC_SITE_URL`：正式 HTTPS 地址
-- `NEXT_PUBLIC_SUPPORT_EMAIL`：隐私与安全联系邮箱
+- `NEXT_PUBLIC_SUPPORT_EMAIL`：可选的隐私与安全公开邮箱；未配置时使用站内客服表单
 
 启动：
 
@@ -146,6 +146,14 @@ APP_DIR=/opt/birthday-match ./deploy/backup.sh
 
 备份默认保存在 `/opt/birthday-match/backups`，保留 14 天。生产环境建议把该目录同步到另一台机器或对象存储。
 
+健康检查：
+
+```bash
+APP_DIR=/opt/birthday-match ./deploy/healthcheck.sh
+```
+
+站内 `/support` 表单可用于账号恢复、安全和隐私请求。管理员登录后可在 `/admin` 处理客服工单和举报；首次部署后，应由运营人员在数据库中明确指定管理员角色，不要将管理权限自动授予新注册用户。
+
 ## 安全与隐私
 
 - 登录邮箱不会出现在候选资料中。
@@ -154,6 +162,7 @@ APP_DIR=/opt/birthday-match ./deploy/backup.sh
 - PostgreSQL 不向公网暴露端口。
 - 联系方式只有匹配成功的双方可以读取。
 - 举报关系会阻止双方再次进入彼此的候选结果。
+- 管理员停用账号后，该账号会话立即失效，档案会暂停，历史匹配不再展示其联系方式。
 - 认证接口应在 Nginx 层限流。
 
 上线前仍需根据运营主体和目标用户所在地，复核隐私政策、数据保护、未成年人保护、ICP备案及线下活动责任。

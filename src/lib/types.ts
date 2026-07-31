@@ -62,3 +62,33 @@ export interface Connection {
   contact_kind: ContactKind;
   contact_value: string;
 }
+
+export type SupportCategory = "account_recovery" | "safety" | "privacy" | "general";
+export type ModerationAction = "reviewing" | "resolved" | "ban";
+
+export interface AdminReport {
+  id: string;
+  reporter_email: string;
+  reporter_nickname: string | null;
+  target_email: string;
+  target_nickname: string | null;
+  target_status: "active" | "banned";
+  reason: "harassment" | "false_information" | "unsafe_behavior" | "spam" | "other";
+  details: string;
+  status: "open" | "reviewing" | "resolved";
+  created_at: string;
+}
+
+export interface AdminSupportRequest {
+  id: string;
+  category: SupportCategory;
+  email: string;
+  message: string;
+  status: "open" | "resolved";
+  created_at: string;
+}
+
+export interface AdminDashboardData {
+  reports: AdminReport[];
+  supportRequests: AdminSupportRequest[];
+}

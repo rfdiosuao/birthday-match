@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LegalPage } from "@/components/legal-page";
 
 export const metadata: Metadata = { title: "隐私政策" };
@@ -7,7 +8,7 @@ export default function PrivacyPage() {
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
 
   return (
-    <LegalPage title="隐私政策" updated="2026 年 7 月 27 日">
+    <LegalPage title="隐私政策" updated="2026 年 7 月 31 日">
       <section>
         <h2>我们收集什么</h2>
         <p>为完成注册和匹配，我们处理登录邮箱、昵称、生日的月和日、城市、自我介绍、庆祝偏好、性别与小组偏好、联系方式，以及你作出的匹配选择和举报信息。我们不要求填写出生年份、身份证号码或精确住址。</p>
@@ -22,7 +23,7 @@ export default function PrivacyPage() {
       </section>
       <section>
         <h2>保存和安全</h2>
-        <p>账号、档案和匹配信息存储在配置的 Supabase 项目中，并通过行级安全策略限制访问。我们仅在提供服务、处理安全事件和履行法定义务所需的期限内保存信息。</p>
+        <p>账号、档案和匹配信息存储在我们的自建服务器数据库中，并通过服务端权限检查限制访问。我们仅在提供服务、处理安全事件和履行法定义务所需的期限内保存信息。</p>
       </section>
       <section>
         <h2>你的权利</h2>
@@ -30,7 +31,7 @@ export default function PrivacyPage() {
       </section>
       <section>
         <h2>联系我们</h2>
-        <p>{supportEmail ? <>隐私请求与安全问题请发送至 <a href={`mailto:${supportEmail}`}>{supportEmail}</a>。</> : "正式上线前，运营者必须在环境变量 NEXT_PUBLIC_SUPPORT_EMAIL 中配置可用的联系邮箱。"}</p>
+        <p>{supportEmail ? <>隐私请求与安全问题请发送至 <a href={`mailto:${supportEmail}`}>{supportEmail}</a>，也可以使用 <Link href="/support">站内客服表单</Link>。</> : <>隐私请求、安全问题和账号恢复，请使用 <Link href="/support">站内客服表单</Link>，运营人员会在后台处理。</>}</p>
       </section>
     </LegalPage>
   );

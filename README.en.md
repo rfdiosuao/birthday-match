@@ -79,7 +79,7 @@ npm run build
 
 ## Self-hosting
 
-Copy `.env.example` to `.env.production`, set a long random database password, your public HTTPS URL, and a support email. Then run:
+Copy `.env.example` to `.env.production`, set a long random database password and your public HTTPS URL. A public support email is optional because the site includes a support form. Then run:
 
 ```bash
 docker compose --env-file .env.production up -d --build
@@ -99,6 +99,14 @@ Create a database backup:
 APP_DIR=/opt/birthday-match ./deploy/backup.sh
 ```
 
+Run the operational health check:
+
+```bash
+APP_DIR=/opt/birthday-match ./deploy/healthcheck.sh
+```
+
+The `/support` form accepts account-recovery, safety, and privacy requests. An explicitly assigned administrator can review support tickets and reports at `/admin`; administrator privileges must never be granted automatically to newly registered accounts.
+
 ## Security boundaries
 
 - Login emails never appear in candidate profiles.
@@ -107,6 +115,7 @@ APP_DIR=/opt/birthday-match ./deploy/backup.sh
 - PostgreSQL is not exposed to the public internet.
 - Contact details are returned only to mutually connected users.
 - Reported users are removed from each other’s candidate pool.
+- Banning an account invalidates its sessions, pauses its profile, and hides its contact details from historical matches.
 
 Review local privacy, data-protection, age-restriction, and event-liability requirements before operating the service.
 

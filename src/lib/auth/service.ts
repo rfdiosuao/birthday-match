@@ -4,6 +4,8 @@ export interface AuthUser {
   id: string;
   email: string;
   passwordHash: string;
+  role: "user" | "admin";
+  status: "active" | "banned";
 }
 
 export interface AuthUserRepository {
@@ -12,7 +14,7 @@ export interface AuthUserRepository {
 }
 
 export class AuthServiceError extends Error {
-  constructor(public readonly code: "email_exists" | "invalid_credentials" | "invalid_input") {
+  constructor(public readonly code: "email_exists" | "invalid_credentials" | "invalid_input" | "account_disabled") {
     super(code);
   }
 }
@@ -27,7 +29,12 @@ export async function registerUser(
   if (!parsed.success) throw new AuthServiceError("invalid_input");
 
   const passwordHash = await hashPassword(parsed.data.password);
-  return repository.create(parsed.data.email, passwordHash);
+  try {
+    return await repository.create(parsed.data.email, passwordHash);
+  } catch (error) {
+    if (isRepositoryEmailConflict(error)) throw new AuthServiceError("email_exists");
+    throw error;
+  }
 }
 
 export async function authenticateUser(
@@ -42,5 +49,13 @@ export async function authenticateUser(
   const passwordMatches = await verifyPassword(parsed.data.password, passwordHash);
 
   if (!user || !passwordMatches) throw new AuthServiceError("invalid_credentials");
+  if (user.status === "banned") throw new AuthServiceError("account_disabled");
   return user;
+}
+
+function isRepositoryEmailConflict(error: unknown) {
+  return typeof error === "object"
+    && error !== null
+    && "code" in error
+    && error.code === "email_exists";
 }
